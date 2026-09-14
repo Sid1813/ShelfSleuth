@@ -1,7 +1,23 @@
+# Ignore the project's Python virtual environment
 .venv/
-.env/
+
+# Ignore environment variables and API keys
+.env
+
+# Ignore Python's cached bytecode files
 __pycache__/
+
+# Ignore compiled Python files
 *.py[cod]
+
+# Ignore Jupyter Notebook's automatically generated checkpoint files
 .ipynb_checkpoints/
+
+# Ignore macOS system metadata files
 .DS_Store
-Thumbs.db 
+
+# Ignore Windows system metadata files
+Thumbs.db
+
+# Ignore locally generated DuckDB database files
+data/processed/*.duckdb
