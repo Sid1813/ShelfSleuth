@@ -116,6 +116,8 @@ The result is not just a number, but an **evidence-backed business investigation
 
 ```
 
+---
+
 ## 🔄 Workflow
 
 ### 1. User Question
@@ -414,7 +416,7 @@ ShelfSleuth is a **research and portfolio prototype**, not a production deployme
 - LLM-generated SQL and reasoning can still contain errors
 - Business knowledge is currently relatively small and manually defined
 - No production-grade monitoring, authentication, or deployment infrastructure
-- 
+
 ---
 
 ## 🎯 Purpose
