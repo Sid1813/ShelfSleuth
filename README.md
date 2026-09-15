@@ -407,18 +407,6 @@ ShelfSleuth/
 
 ---
 
-## ⚠️ Current Limitations
-
-ShelfSleuth is a **research and portfolio prototype**, not a production deployment.
-
-- Small evaluation dataset and limited live test coverage
-- Dependent on LLM API availability and request quotas
-- LLM-generated SQL and reasoning can still contain errors
-- Business knowledge is currently relatively small and manually defined
-- No production-grade monitoring, authentication, or deployment infrastructure
-
----
-
 ## 🎯 Purpose
 
 This project was created as a hands-on exercise to understand how **OKF, semantic layers, and Text-to-SQL** work together in an AI-powered analytics workflow.
