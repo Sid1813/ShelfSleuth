@@ -1,22 +1,19 @@
-# Define the Critic Agent that validates the reasoning and recommendations produced by other agents
-
-
-# Import the libraries needed to load our Gemini API key and communicate with Gemini
+# Define the Critic Agent that validates the reasoning and recommendations
+# produced by other agents
 
 import os
+import time
 
 from dotenv import load_dotenv
-
 from google import genai
+from google.genai import errors
 
 
 # Load environment variables from the project's .env file
-
 load_dotenv()
 
 
 # Create a Gemini client using the API key stored in the environment
-
 client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
@@ -27,15 +24,47 @@ class CriticAgent:
     def __init__(self):
 
         # The Critic currently does not require any external tools
-
         pass
 
 
-    # Review the root-cause analysis and action plan for unsupported reasoning
+    # Send a prompt to Gemini while handling temporary API failures
+    def _generate_response(self, prompt, max_retries=2):
 
+        for attempt in range(max_retries + 1):
+
+            try:
+
+                return client.models.generate_content(
+                    model="gemini-3.6-flash",
+                    contents=prompt,
+                )
+
+            except errors.ClientError as error:
+
+                # Stop immediately when Gemini quota is exhausted
+                if getattr(error, "code", None) == 429:
+
+                    raise RuntimeError(
+                        "Gemini API quota has been exhausted. "
+                        "Please wait for the quota to reset."
+                    ) from error
+
+                raise
+
+            except errors.ServerError as error:
+
+                # Retry temporary server errors such as HTTP 503
+                if getattr(error, "code", None) == 503 and attempt < max_retries:
+
+                    time.sleep(2 ** attempt)
+                    continue
+
+                raise
+
+
+    # Review the root-cause analysis and action plan
+    # for unsupported reasoning
     def review(self, question, root_cause_analysis, action_plan):
-
-        # Build a prompt containing the reasoning and recommendations that need to be checked
 
         prompt = f"""
 You are the Critic Agent for ShelfSleuth.
@@ -72,16 +101,8 @@ State what should be changed if revision is needed.
 Do not invent additional facts.
 """
 
-
         # Ask Gemini to critically evaluate the previous agents' outputs
-
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-
-            contents=prompt,
-        )
-
+        response = self._generate_response(prompt)
 
         # Return the critic's evaluation
-
         return response.text.strip()
