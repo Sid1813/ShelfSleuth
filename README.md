@@ -12,7 +12,7 @@ The project combines a **semantic layer**, **business knowledge (OKF)**, **Text-
 
 ---
 
-## 🎯 Problem
+## 🧩 Problem
 
 Retail analytics often involves more than answering questions such as:
 
