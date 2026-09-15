@@ -110,3 +110,9 @@ The result is not just a number, but an **evidence-backed business investigation
                        ┌─────────────────────┐
                        │ Final Investigation │
                        └─────────────────────┘
+
+---
+
+# 👨‍💻 Author
+
+Siddharth Ranganatha
