@@ -111,8 +111,17 @@ The result is not just a number, but an **evidence-backed business investigation
                        │ Final Investigation │
                        └─────────────────────┘
 
+
+```
+
+---
+
+## 🎯 Purpose
+
+This project was created as a hands-on exercise to understand how **OKF, semantic layers, and Text-to-SQL** work together in an AI-powered analytics workflow.
+
 ---
 
 # 👨‍💻 Author
 
-Siddharth Ranganatha
+**Siddharth Ranganatha**
