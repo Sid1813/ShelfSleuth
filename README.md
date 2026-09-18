@@ -391,8 +391,6 @@ ShelfSleuth/
 │   ├── critic_agent.py
 │   └── research_pipeline.py
 │
-├── api/
-│
 ├── data/
 │   └── processed/
 │
@@ -417,8 +415,6 @@ ShelfSleuth/
 ├── tools/
 │   ├── investigation_tool.py
 │   └── sql_tool.py
-│
-├── tests/
 │
 ├── requirements.txt
 └── README.md
