@@ -1,16 +1,12 @@
-# Define the Root Cause Agent that interprets controlled investigation evidence using business knowledge
+# Define the Root Cause Agent that interprets controlled
+# investigation evidence using relevant business knowledge
 
-
-# Import the libraries needed to load our Gemini API key and communicate with Gemini
 
 import os
-
 import time
 
 from dotenv import load_dotenv
-
 from google import genai
-
 from google.genai import errors
 
 
@@ -28,33 +24,24 @@ client = genai.Client(
 
 class RootCauseAgent:
 
-    def __init__(self, investigation_tool, knowledge_base):
+    def __init__(self, investigation_tool):
 
-        # Store the investigation tool so the agent can access controlled SQL investigations
+        # Store the investigation tool so the agent can access
+        # controlled SQL investigations
 
         self.investigation_tool = investigation_tool
-
-
-        # Store the business knowledge so the agent can reason using established rules
-
-        self.knowledge_base = knowledge_base
 
 
     # Send a prompt to Gemini while handling temporary API failures
 
     def _generate_response(self, prompt, max_retries=2):
 
-        # Try the Gemini request up to the configured number of retries
-
         for attempt in range(max_retries + 1):
 
             try:
 
-                # Send the prompt to Gemini
-
                 return client.models.generate_content(
-                    model="gemini-3.6-flash",
-
+                    model="gemini-3.5-flash",
                     contents=prompt,
                 )
 
@@ -70,9 +57,6 @@ class RootCauseAgent:
                         "Please wait for the quota to reset."
                     ) from error
 
-
-                # Re-raise other client errors
-
                 raise
 
 
@@ -80,23 +64,25 @@ class RootCauseAgent:
 
                 # Retry temporary server errors such as HTTP 503
 
-                if getattr(error, "code", None) == 503 and attempt < max_retries:
-
-                    # Wait progressively longer before retrying
+                if (
+                    getattr(error, "code", None) == 503
+                    and attempt < max_retries
+                ):
 
                     time.sleep(2 ** attempt)
-
                     continue
-
-
-                # Raise the error if retries are exhausted
 
                 raise
 
 
     # Investigate the initial result using a controlled investigation
 
-    def analyze(self, question, initial_result):
+    def analyze(
+        self,
+        question,
+        initial_result,
+        knowledge,
+    ):
 
         # Run the predefined store-level inventory investigation
 
@@ -105,12 +91,13 @@ class RootCauseAgent:
         )
 
 
-        # Convert the business knowledge into readable text for Gemini
+        # Convert the relevant OKF knowledge into readable text
 
-        knowledge = str(self.knowledge_base)
+        knowledge_text = str(knowledge)
 
 
-        # Build a prompt containing the original question and controlled evidence
+        # Build a prompt containing the original question,
+        # controlled evidence, and relevant business knowledge
 
         prompt = f"""
 You are the Root Cause Agent for ShelfSleuth.
@@ -127,8 +114,8 @@ Store-level inventory comparison.
 Investigation result:
 {investigation_result}
 
-Business knowledge:
-{knowledge}
+Relevant business knowledge from the ShelfSleuth OKF bundle:
+{knowledge_text}
 
 Analyze the evidence and identify the most likely root causes.
 
@@ -136,6 +123,9 @@ Clearly distinguish between:
 - Direct evidence from the data.
 - Business interpretation.
 - Hypotheses that require further investigation.
+
+Use the business knowledge only as contextual guidance.
+Do not treat a business rule as evidence from the data.
 
 Do not invent facts.
 Do not claim causation unless the evidence supports it.
@@ -153,6 +143,8 @@ Do not claim causation unless the evidence supports it.
             "investigation": "store_inventory_comparison",
 
             "investigation_result": investigation_result,
+
+            "knowledge_used": knowledge,
 
             "root_cause": response.text.strip(),
         }

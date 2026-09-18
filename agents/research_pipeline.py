@@ -1,7 +1,6 @@
-# Define the ShelfSleuth pipeline that coordinates all agents and investigation tools
+# Define the ShelfSleuth pipeline that coordinates all agents
+# and investigation tools
 
-
-# Import the agents used by the pipeline
 
 from agents.text_to_sql_agent import TextToSQLAgent
 
@@ -13,6 +12,8 @@ from agents.action_planner_agent import ActionPlannerAgent
 
 from agents.critic_agent import CriticAgent
 
+from okf.loader import load_okf_knowledge
+
 
 class ShelfSleuthPipeline:
 
@@ -20,32 +21,35 @@ class ShelfSleuthPipeline:
         self,
         database_connection,
         semantic_context,
-        knowledge_base,
         investigation_tool,
     ):
 
-        # Create the Text-to-SQL Agent with access to the database and semantic layer
+        # Load business knowledge from the OKF Markdown bundle
+
+        knowledge_base = load_okf_knowledge()
+
+
+        # Create the Text-to-SQL Agent with access to the database
+        # and semantic layer
 
         self.text_to_sql_agent = TextToSQLAgent(
             database_connection=database_connection,
-
             semantic_context=semantic_context,
         )
 
 
-        # Create the Knowledge Agent as the business-knowledge provider
+        # Create the Knowledge Agent as the OKF retrieval layer
 
         self.knowledge_agent = KnowledgeAgent(
             knowledge_base=knowledge_base,
         )
 
 
-        # Give the Root Cause Agent access to controlled investigation tools and OKF
+        # Create the Root Cause Agent with access to controlled
+        # investigation tools
 
         self.root_cause_agent = RootCauseAgent(
             investigation_tool=investigation_tool,
-
-            knowledge_base=knowledge_base,
         )
 
 
@@ -63,26 +67,30 @@ class ShelfSleuthPipeline:
 
     def run(self, question):
 
-        # Convert the user's natural-language question into SQL and execute it
+        # Convert the user's natural-language question into SQL
+        # and execute it
 
         sql_answer = self.text_to_sql_agent.answer_question(
             question
         )
 
 
-        # Retrieve the deterministic business knowledge from the OKF layer
+        # Retrieve only the OKF concepts relevant to the question
 
         knowledge = self.knowledge_agent.get_knowledge(
             question=question
         )
 
 
-        # Investigate the initial result using controlled SQL investigations
+        # Investigate the initial result using controlled SQL
+        # investigations and relevant business knowledge
 
         root_cause_analysis = self.root_cause_agent.analyze(
             question=question,
 
             initial_result=sql_answer["result"],
+
+            knowledge=knowledge,
         )
 
 
@@ -95,7 +103,8 @@ class ShelfSleuthPipeline:
         )
 
 
-        # Ask the Critic Agent to validate the reasoning and recommendations
+        # Ask the Critic Agent to validate the reasoning
+        # and recommendations
 
         critic_review = self.critic_agent.review(
             question=question,
@@ -106,7 +115,8 @@ class ShelfSleuthPipeline:
         )
 
 
-        # Return the complete investigation and all important intermediate outputs
+        # Return the complete investigation and important
+        # intermediate outputs
 
         return {
             "question": question,

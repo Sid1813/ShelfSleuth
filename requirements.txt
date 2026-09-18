@@ -1,0 +1,5 @@
+duckdb
+PyYAML
+python-dotenv
+google-genai
+pandas

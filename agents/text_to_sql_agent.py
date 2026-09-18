@@ -51,7 +51,7 @@ class TextToSQLAgent:
 
                 # Send the prompt to Gemini 3.6 Flash and ask it to generate SQL
                 response = client.models.generate_content(
-                    model="gemini-3.6-flash",
+                    model="gemini-3.5-flash",
                     contents=prompt,
                 )
 
