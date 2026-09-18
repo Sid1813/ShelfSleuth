@@ -8,7 +8,7 @@ Instead of simply generating SQL or returning a number, ShelfSleuth follows an i
 
 > **Question → SQL → Evidence → Business Context → Root Cause → Action → Critique**
 
-The project combines a **semantic layer**, **business knowledge (OKF)**, **Text-to-SQL**, deterministic database investigation, and specialized reasoning agents to investigate retail inventory and demand problems.
+The project combines a **semantic layer**, **business knowledge using the Open Knowledge Format (OKF)**, **Text-to-SQL**, deterministic database investigation, and specialized reasoning agents to investigate retail inventory and demand problems.
 
 ---
 
@@ -18,15 +18,15 @@ Retail analytics often involves more than answering questions such as:
 
 - Which store has the lowest inventory?
 - Which store has the highest average sales?
-- Where is forecast accuracy weakest?
-- Which locations have the greatest inventory risk?
+- Where is inventory coverage lowest?
+- Which locations may have greater inventory risk?
 
 A raw SQL query can identify *what happened*, but it does not necessarily explain:
 
 - **Why** it happened
-- **Whether** the result represents a genuine business risk
+- **Whether** the result represents a potential business risk
 - **What** should be investigated next
-- **What action** an operations team should take
+- **What action** an operations team could consider
 
 ShelfSleuth is designed to bridge that gap by combining data analysis with business context and structured reasoning.
 
@@ -42,12 +42,12 @@ ShelfSleuth then:
 
 1. Understands the retail data model and business terminology.
 2. Generates SQL to answer the question.
-3. Executes the SQL against the database.
-4. Retrieves the relevant business knowledge and operational rules.
-5. Investigates the result against related metrics and stores.
-6. Identifies potential root causes and business risks.
-7. Generates actionable recommendations.
-8. Critically reviews the investigation for consistency and unsupported conclusions.
+3. Executes the SQL against DuckDB.
+4. Retrieves relevant business knowledge from the OKF bundle.
+5. Runs a controlled investigation using predefined SQL analysis.
+6. Uses the evidence and business context to identify potential root causes.
+7. Generates practical business recommendations.
+8. Critically reviews the reasoning and recommendations.
 
 The result is not just a number, but an **evidence-backed business investigation**.
 
@@ -69,10 +69,9 @@ The result is not just a number, but an **evidence-backed business investigation
                                   │
                                   ▼
                        ┌─────────────────────┐
-                       │   Investigation     │
-                       │       Tool          │
+                       │       DuckDB        │
                        │                     │
-                       │ SQL → DB Evidence   │
+                       │ SQL → Data Evidence │
                        └──────────┬──────────┘
                                   │
                     ┌─────────────┴─────────────┐
@@ -80,12 +79,11 @@ The result is not just a number, but an **evidence-backed business investigation
                     ▼                           ▼
              ┌───────────────┐        ┌─────────────────────┐
              │ Semantic Layer│        │   Knowledge Agent   │
-             │               │        │     (OKF Provider)  │
-             │ Data meaning  │        │                     │
-             │ Metrics       │        │ Business knowledge  │
-             │ Relationships │        │ and business rules  │
+             │               │        │                     │
+             │ Metrics       │        │     OKF Provider     │
+             │ Dimensions    │        │                     │
+             │ Business rules│        │ Business knowledge  │
              └───────┬───────┘        └──────────┬──────────┘
-                     │                           │
                      │                           │
                      └─────────────┬─────────────┘
                                    ▼
@@ -116,8 +114,6 @@ The result is not just a number, but an **evidence-backed business investigation
 
 ```
 
----
-
 ## 🔄 Workflow
 
 ### 1. User Question
@@ -136,106 +132,132 @@ The **Text-to-SQL Agent** translates the natural-language question into executab
 
 It uses the **semantic layer** to understand:
 
-- Which tables contain the required data
-- What columns represent
-- How metrics should be calculated
-- Which business concepts map to database fields
+- Which metrics are available
+- Which dimensions can be queried
+- How important business metrics should be calculated
+- Which database columns correspond to business concepts
 
-The agent also includes retry/correction logic to handle SQL generation errors.
+The agent also includes retry and SQL-error correction logic.
 
-### 3. Investigation Tool
+### 3. DuckDB
 
-The **Investigation Tool** executes the generated SQL against the DuckDB database.
+The generated SQL is executed against a local **DuckDB** database containing the retail inventory data.
 
-Its role is deliberately deterministic:
+The database provides the factual evidence used by the downstream investigation.
+
+The separation is intentional:
 
 > **SQL → Database → Evidence**
 
-This separates factual database retrieval from LLM reasoning and provides downstream agents with concrete numerical evidence.
+This keeps factual data retrieval separate from LLM-generated interpretation.
 
-### 4. Semantic Layer
+### 4. Investigation Tool
 
-The **Semantic Layer** provides structured information about the data model.
+ShelfSleuth also contains controlled investigation queries for deeper analysis.
 
-It describes:
+For example, the current investigation layer can compare stores using:
 
-- Tables
-- Columns
-- Metrics
-- Relationships
-- Business meanings
-- Relevant calculations
+- Average inventory
+- Average units sold
+- Average demand forecast
+- Average inventory coverage
 
-Its purpose is to help the LLM understand the data correctly rather than relying only on raw column names.
+These investigations are deterministic SQL operations rather than arbitrary LLM-generated analysis.
+
+### 5. Semantic Layer
+
+The **Semantic Layer** provides structured information about the business meaning of the data.
+
+The current implementation defines:
+
+- **Metrics**
+- **Dimensions**
+- **Business rules**
+
+Examples include:
+
+- Average inventory
+- Units sold
+- Demand forecast
+- Inventory coverage
+- Store
+- Product
+- Category
+- Region
+- Date
+- Seasonality
+- Low inventory coverage
 
 In simple terms:
 
 > **Semantic Layer = What does the data mean?**
 
-### 5. Knowledge Agent / OKF
+### 6. Knowledge Agent / OKF
 
-The **Knowledge Agent** is a lightweight business-knowledge provider.
+The **Knowledge Agent** provides access to business knowledge stored using the **Open Knowledge Format (OKF)**.
 
-It exposes the project's **OKF (Operational Knowledge Framework)**, which contains business rules and domain knowledge related to areas such as:
+The current OKF bundle contains business-rule concepts covering:
 
-- Inventory coverage
-- Stockout risk
-- Forecast accuracy
-- Forecast bias
-- Replenishment
-- Inventory thresholds
-- Operational constraints
+- **Inventory**
+- **Demand**
+- **Store Performance**
+
+The OKF documents provide business context such as:
+
+- Inventory should be evaluated relative to expected demand.
+- Inventory coverage below one day can indicate a potential inventory-risk situation.
+- A persistent gap between forecasted demand and actual sales may indicate forecast bias.
+- Store-level inventory should be considered alongside sales and demand.
 
 The Knowledge Agent is intentionally deterministic rather than being another LLM reasoning layer.
 
 In simple terms:
 
-> **OKF = What does the business know?**  
+> **OKF = What does the business know?**
+>
 > **Knowledge Agent = How does the pipeline access that knowledge?**
 
 This keeps business knowledge separate from raw data and model-generated reasoning.
 
-### 6. Root Cause Agent
+### 7. Root Cause Agent
 
 The **Root Cause Agent** goes beyond the initial SQL answer.
 
-It examines the evidence and business context to investigate:
+It receives:
 
-- What is unusual?
-- Is the result actually risky?
-- What other factors may explain it?
-- Is the issue isolated or systemic?
-- Which related metrics or entities should be considered?
+- The user's original question
+- The initial SQL result
+- Controlled investigation results
+- Relevant OKF business knowledge
 
-For example, a store may have the lowest absolute inventory but still have healthy inventory coverage.
+It then distinguishes between:
 
-The agent therefore distinguishes between:
+- **Direct evidence from the data**
+- **Business interpretation**
+- **Hypotheses requiring further investigation**
+
+For example, a store may have the lowest absolute inventory without necessarily having the lowest inventory coverage.
+
+This creates an important distinction between:
 
 > **"Lowest inventory"**
 
 and
 
-> **"Highest business risk."**
+> **"Potentially greater inventory risk."**
 
-This is a key difference between ShelfSleuth and a simple Text-to-SQL system.
+The agent is explicitly instructed not to treat business rules as evidence from the database and not to claim causation without supporting evidence.
 
-### 7. Action Planner Agent
+### 8. Action Planner Agent
 
-The **Action Planner Agent** converts the investigation into operational recommendations.
+The **Action Planner Agent** converts the investigation into practical recommendations.
 
-It focuses on:
+For each recommendation, it identifies:
 
-- What should be done?
-- Why should it be done?
-- What should be investigated further?
-- What metric should be monitored?
-
-Possible recommendations include:
-
-- Recalibrating a forecast where systematic bias is observed
-- Monitoring a store with low inventory coverage
-- Investigating replenishment or stockout patterns
-- Reviewing inventory levels at a more granular level
+1. The proposed action
+2. Why the action is appropriate
+3. The business persona that should own it
+4. The metric that should be monitored afterward
 
 The goal is to move from:
 
@@ -243,16 +265,17 @@ The goal is to move from:
 
 rather than stopping at analysis.
 
-### 8. Critic Agent
+### 9. Critic Agent
 
 The **Critic Agent** provides a final validation layer.
 
-It reviews the investigation and checks whether:
+It reviews the root-cause analysis and action plan for:
 
-- The reasoning is consistent with the evidence
-- Recommendations are supported by the analysis
-- Conclusions overreach the available data
-- Important inconsistencies are present
+- Claims unsupported by the evidence
+- Unsupported assumptions or causal claims
+- Recommendations that do not logically follow from the analysis
+- Missing caveats
+- Unclear business ownership
 
 In simple terms:
 
@@ -267,9 +290,9 @@ ShelfSleuth uses multiple specialized components because each stage has a differ
 | Component | Purpose |
 |---|---|
 | **Text-to-SQL Agent** | Translate business questions into executable SQL |
-| **Investigation Tool** | Execute SQL and retrieve factual database evidence |
+| **Investigation Tool** | Execute controlled SQL investigations |
 | **Knowledge Agent** | Provide access to business knowledge / OKF |
-| **Root Cause Agent** | Investigate evidence and identify potential causes |
+| **Root Cause Agent** | Interpret evidence and identify potential causes |
 | **Action Planner Agent** | Convert findings into operational recommendations |
 | **Critic Agent** | Validate reasoning and recommendations |
 
@@ -285,19 +308,19 @@ ShelfSleuth demonstrates how three important concepts work together in an AI ana
 
 ### Semantic Layer
 
-Provides structured knowledge about the **data**.
+Provides structured knowledge about the **data model**.
 
-> **"What does this table, column, or metric mean?"**
+> **"What does this metric, dimension, or business rule mean?"**
 
 ### OKF / Business Knowledge
 
-Provides knowledge about the **business**.
+Provides knowledge about the **business context**.
 
-> **"What does this metric mean operationally, and what rules or thresholds matter?"**
+> **"What business rules should influence how the data is interpreted?"**
 
 ### Text-to-SQL
 
-Connects the **user's question to the data**.
+Connects the **user's question to the database**.
 
 > **"How do I query the database to answer this question?"**
 
@@ -313,46 +336,45 @@ Together:
 
 > **"Which store has the lowest average inventory?"**
 
-### SQL Result
+### Initial SQL Result
 
 ShelfSleuth identifies:
 
 > **S004 — Average Inventory: ~272.30**
 
-However, the investigation does not stop there.
+The investigation does not stop at this result.
 
-The Root Cause Agent compares the result with other stores and related inventory metrics.
+The controlled investigation compares store-level inventory, sales, demand forecast, and inventory coverage.
 
-It identifies that:
+The Root Cause Agent then uses these results together with relevant OKF business rules.
 
-- S004 has the lowest absolute average inventory.
-- Its inventory coverage is not necessarily the most concerning.
-- S002 has lower inventory coverage and may be more sensitive to demand fluctuations.
-- Broader forecast behaviour may also contribute to inventory pressure.
+The analysis can distinguish between:
 
-The Action Planner then recommends actions such as:
+- The store with the lowest absolute inventory
+- The store with lower inventory coverage
+- Potential explanations that require additional investigation
 
-- Investigating replenishment and stockout patterns for S004
-- Monitoring S002 because of its lower coverage
-- Reviewing forecast calibration where systematic bias is observed
-
-The Critic Agent reviews the investigation before the final result is returned.
+The Action Planner then converts supported findings into recommended actions, while the Critic Agent reviews the reasoning before the final investigation is returned.
 
 This illustrates the main idea behind ShelfSleuth:
 
-> **The answer to the question is not always the same as the root business problem.**
+> **The answer to the question is not necessarily the same as the underlying business problem.**
 
 ---
 
 ## 📊 Evaluation & Robustness
 
-ShelfSleuth was evaluated using deterministic DuckDB queries and a small set of representative retail business questions.
+ShelfSleuth has been tested using deterministic DuckDB queries and representative retail business questions.
 
-The end-to-end pipeline was successfully executed on a representative investigation question, and the generated SQL result matched the deterministic database result.
+The complete investigation pipeline was successfully executed for:
 
-Additional live evaluations were attempted, but the Gemini API free-tier request quota was exhausted during testing. These cases are therefore treated as **unevaluated due to API limits**, rather than failures of the ShelfSleuth pipeline.
+> **"Which store has the lowest average inventory?"**
 
-The evaluation setup can be extended with additional API capacity or a mocked/cached LLM layer for larger-scale testing.
+The generated SQL executed successfully against DuckDB, the relevant OKF concepts were retrieved, the controlled investigation completed, and the downstream Root Cause, Action Planner, and Critic stages executed successfully.
+
+During development, additional live evaluations were also attempted. Some runs were interrupted by Gemini API availability and free-tier quota limitations. These are treated as **evaluation-environment limitations**, rather than failures of the underlying ShelfSleuth architecture.
+
+The evaluation setup can be extended with additional API capacity or mocked/cached LLM responses for larger-scale testing.
 
 ---
 
@@ -378,16 +400,23 @@ ShelfSleuth/
 │   └── 01_data_reconnaissance.ipynb
 │
 ├── okf/
-│   └── business knowledge and rules
+│   ├── index.md
+│   ├── log.md
+│   ├── inventory.md
+│   ├── demand.md
+│   ├── store-performance.md
+│   ├── loader.py
+│   └── __init__.py
 │
 ├── semantic_layer/
-│   └── data and metric definitions
+│   └── metrics.py
 │
 ├── src/
-│   └── supporting project utilities
+│   └── database.py
 │
 ├── tools/
-│   └── investigation tools
+│   ├── investigation_tool.py
+│   └── sql_tool.py
 │
 ├── tests/
 │
@@ -395,7 +424,6 @@ ShelfSleuth/
 └── README.md
 
 ```
----
 
 ## 🛠️ Tech Stack
 
@@ -403,13 +431,21 @@ ShelfSleuth/
 - **DuckDB** — analytical database
 - **SQL** — deterministic data investigation
 - **Google Gemini** — LLM for Text-to-SQL and reasoning
+- **Open Knowledge Format (OKF)** — structured business knowledge
+- **PyYAML** — parsing OKF YAML frontmatter
 - **VS Code** — development and experimentation
 
 ---
 
 ## 🎯 Purpose
 
-This project was created as a hands-on exercise to understand how **OKF, semantic layers, and Text-to-SQL** work together in an AI-powered analytics workflow.
+This project was created as a hands-on exercise to understand how **Open Knowledge Format (OKF), semantic layers, Text-to-SQL, and agentic reasoning** can work together in an AI-powered analytics workflow.
+
+The project emphasizes a separation between:
+
+> **Data → Business Knowledge → Reasoning → Action**
+
+This makes it possible to investigate not only *what happened*, but also how business context can be used to interpret the result and determine what should be investigated next.
 
 ---
 
