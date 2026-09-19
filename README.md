@@ -400,7 +400,7 @@ The Root Cause Agent separates:
 
 - **Direct evidence** — facts supported by database results
 - **Business interpretation** — conclusions informed by the OKF rules
-- **Hypotheses** — plausible explanations requiring additional investigation
+- **Hypotheses** — plausible explanations requiring additional investigation**
 
 The Critic Agent then reviews the analysis for unsupported causal claims, inconsistent reasoning, and recommendations that do not follow from the available evidence.
 ---
