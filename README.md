@@ -402,7 +402,7 @@ The Root Cause Agent separates:
 - **Business interpretation** — conclusions informed by the OKF rules
 - **Hypotheses** — plausible explanations requiring additional investigation
 
-The Critic Agent reviews the analysis for unsupported causal claims, inconsistent reasoning, and recommendations that do not follow from the available evidence.
+<p>The Critic Agent reviews the analysis for unsupported causal claims, inconsistent reasoning, and recommendations that do not follow from the available evidence.</p>
 ---
 
 ## 📁 Project Structure
