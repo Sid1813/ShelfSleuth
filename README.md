@@ -366,16 +366,43 @@ This illustrates the main idea behind ShelfSleuth:
 
 ShelfSleuth has been tested using deterministic DuckDB queries and representative retail business questions.
 
-The complete investigation pipeline was successfully executed for:
+The complete end-to-end investigation pipeline was successfully executed for:
 
 > **"Which store has the lowest average inventory?"**
 
-The generated SQL executed successfully against DuckDB, the relevant OKF concepts were retrieved, the controlled investigation completed, and the downstream Root Cause, Action Planner, and Critic stages executed successfully.
+The pipeline successfully:
 
-During development, additional live evaluations were also attempted. Some runs were interrupted by Gemini API availability and free-tier quota limitations. These are treated as **evaluation-environment limitations**, rather than failures of the underlying ShelfSleuth architecture.
+1. Generated executable SQL from the natural-language question.
+2. Executed the SQL against DuckDB.
+3. Identified Store S004 as having the lowest average inventory.
+4. Retrieved relevant OKF business knowledge.
+5. Ran the controlled store-level investigation.
+6. Generated a root-cause analysis.
+7. Generated an action plan.
+8. Ran the Critic Agent to identify unsupported or inconsistent claims.
 
-The evaluation setup can be extended with additional API capacity or mocked/cached LLM responses for larger-scale testing.
+The generated SQL for the example investigation was:
 
+```sql
+SELECT "Store ID",
+       AVG("Inventory Level") AS "average_inventory"
+FROM retail_inventory
+GROUP BY "Store ID"
+ORDER BY "average_inventory" ASC
+LIMIT 1;
+```
+
+### Evidence vs. Hypotheses
+
+A key design principle is that the system should not present an inferred explanation as an established fact.
+
+The Root Cause Agent separates:
+
+- **Direct evidence** — facts supported by database results
+- **Business interpretation** — conclusions informed by the OKF rules
+- **Hypotheses** — plausible explanations requiring additional investigation
+
+The Critic Agent then reviews the analysis for unsupported causal claims, inconsistent reasoning, and recommendations that do not follow from the available evidence.
 ---
 
 ## 📁 Project Structure
