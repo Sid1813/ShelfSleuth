@@ -403,6 +403,7 @@ The Root Cause Agent separates:
 - **Hypotheses** — plausible explanations requiring additional investigation
 
 <p>The Critic Agent reviews the analysis for unsupported causal claims, inconsistent reasoning, and recommendations that do not follow from the available evidence.</p>
+
 ---
 
 ## 📁 Project Structure
