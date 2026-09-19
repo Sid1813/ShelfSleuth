@@ -62,64 +62,79 @@ class ShelfSleuthPipeline:
 
         self.critic_agent = CriticAgent()
 
-
     # Run the complete ShelfSleuth investigation
 
     def run(self, question):
 
         # Convert the user's natural-language question into SQL
         # and execute it
-
         sql_answer = self.text_to_sql_agent.answer_question(
             question
         )
 
-
         # Retrieve only the OKF concepts relevant to the question
-
         knowledge = self.knowledge_agent.get_knowledge(
             question=question
         )
 
-
         # Investigate the initial result using controlled SQL
         # investigations and relevant business knowledge
-
         root_cause_analysis = self.root_cause_agent.analyze(
             question=question,
-
             initial_result=sql_answer["result"],
-
             knowledge=knowledge,
         )
 
-
         # Convert the root-cause findings into recommended business actions
-
         action_plan = self.action_planner_agent.create_action_plan(
             question=question,
-
             root_cause_analysis=root_cause_analysis,
         )
-
 
         # Ask the Critic Agent to validate the reasoning
         # and recommendations
-
         critic_review = self.critic_agent.review(
             question=question,
-
             root_cause_analysis=root_cause_analysis,
-
             action_plan=action_plan,
         )
 
+        # Extract the direct answer already produced by the
+        # Root Cause Agent.
+        #
+        # The Root Cause Agent currently returns its analysis
+        # as a dictionary containing a "root_cause" text field.
+        root_cause_text = root_cause_analysis.get(
+            "root_cause",
+            ""
+        )
+
+        direct_answer = root_cause_text
+
+        # If the Root Cause Agent uses the expected Markdown
+        # structure, extract only the Direct Answer section.
+        if "### **Direct Answer**" in root_cause_text:
+
+            direct_answer = root_cause_text.split(
+                "### **Direct Answer**",
+                1
+            )[1]
+
+            if "### **Direct Evidence" in direct_answer:
+
+                direct_answer = direct_answer.split(
+                    "### **Direct Evidence",
+                    1
+                )[0]
+
+            direct_answer = direct_answer.strip()
 
         # Return the complete investigation and important
         # intermediate outputs
-
         return {
             "question": question,
+
+            "answer": direct_answer,
 
             "sql": sql_answer["sql"],
 
